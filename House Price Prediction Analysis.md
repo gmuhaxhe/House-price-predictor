@@ -21,7 +21,7 @@ df["Garage Area"] = df["Garage Area"].fillna(0)
 
 ## Model Setup
 
-We set up our machine learning pipeline using scikit-learn components:
+We set up our machine learning pipeline using scikit-learn:
 
 ```python
 from sklearn.model_selection import train_test_split
@@ -72,7 +72,13 @@ r2 = r2_score(y_test, y_pred)
 print(f"Root Mean Squared Error: {rmse:.2f}")
 print(f"R-squared: {r2:.4f}")
 ```
-
+```output
+Root Mean Squared Error: 43125.89
+R-squared: 0.8234
+```
+Here we show how the predictions fall compared to the actual sale prices for the test data:
+![Predicted vs Actual Prices](images/price_prediction_plot.png)
+We notice that the model does relatively well for most price ranges except for the large sale prices.
 ## Improved Model with Log Transformation
 
 To handle the skewed nature of house prices, we applied a log transformation:
@@ -95,14 +101,11 @@ y_pred = np.expm1(y_pred_log)
 rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 print(f"Root Mean Squared Error (after log transformation): {rmse:.2f}")
 ```
-
+```output
+Root Mean Squared Error (RMSE): 38104.208159264934
+R-squared: 0.8189058934281666
+```
+The RMSE decreases and R-squared decreases very slightly.
 ## Visualization
 
-We can visualize the model's predictions using scatter plots. The red dashed line represents perfect predictions, while the points show actual vs. predicted values.
-
-[Note: Visualizations would appear here when rendered. You'll need to save the plots as images and include them in your markdown with:
-
-```markdown
-![Predicted vs Actual Prices](path_to_image.png)
-```
-]
+![Predicted vs Actual Prices](images/price_prediction_plot2.png)
