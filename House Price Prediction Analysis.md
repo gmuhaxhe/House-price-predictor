@@ -46,10 +46,7 @@ To simplify our study, we only select the features that can have the most impact
 ```python
 
 df = pd.read_csv("AmesHousing.csv")
-features_to_keep = ['Lot Area', 'Lot Shape', 'House Style', 'Neighborhood', 
-                   'Year Built', 'Bsmt Cond', 'Central Air', 'Overall Cond',
-                   'Full Bath', 'TotRms AbvGrd', 'Fireplaces', 'Garage Area',
-                   'Yr Sold', 'SalePrice']
+features_to_keep = ['Bsmt Half Bath','Bsmt Full Bath','Total Bsmt SF','Lot Area','Lot Shape','House Style','Neighborhood', 'Year Built','Bsmt Cond','Central Air','Overall Cond','Full Bath','TotRms AbvGrd','Fireplaces','Garage Area','Yr Sold','SalePrice']
 df = df[features_to_keep]
 ```
 Next, we check to see if the features we have selected include any NaN values
@@ -57,12 +54,15 @@ Next, we check to see if the features we have selected include any NaN values
 print(df.isnull().sum())
 ```
 ```output
+Bsmt Half Bath    2
+Bsmt Full Bath    2
+Total Bsmt SF     1
 Lot Area          0
 Lot Shape         0
 House Style       0
 Neighborhood      0
 Year Built        0
-Bsmt Cond        80
+Bsmt Cond         0
 Central Air       0
 Overall Cond      0
 Full Bath         0
@@ -76,8 +76,10 @@ dtype: int64
 We see that Bsmt Cond has 80 such values while Garage Area has one. We choose to turn the Basement Condition ones to None since we do not have information about the basement of those houses and we fill 0 for the Garage Area that is missing.
 ```python 
 # Handle missing values
-df["Bsmt Cond"] = df["Bsmt Cond"].fillna("None")
 df["Garage Area"] = df["Garage Area"].fillna(0)
+df["Total Bsmt SF"] = df["Total Bsmt SF"].fillna(0)
+df["Bsmt Full Bath"] = df["Bsmt Full Bath"].fillna(0)
+df["Bsmt Half Bath"] = df["Bsmt Half Bath"].fillna(0)
 ```
 ## Visualizing and analyzing the data
 We check the type of data each feature includes. This helps us separate the features between categorical and numerical later on.
@@ -87,26 +89,28 @@ df.info()
 ```output
 <class 'pandas.core.frame.DataFrame'>
 RangeIndex: 2930 entries, 0 to 2929
-Data columns (total 14 columns):
- #   Column         Non-Null Count  Dtype  
----  ------         --------------  -----  
- 0   Lot Area       2930 non-null   int64  
- 1   Lot Shape      2930 non-null   object 
- 2   House Style    2930 non-null   object 
- 3   Neighborhood   2930 non-null   object 
- 4   Year Built     2930 non-null   int64  
- 5   Bsmt Cond      2850 non-null   object 
- 6   Central Air    2930 non-null   object 
- 7   Overall Cond   2930 non-null   int64  
- 8   Full Bath      2930 non-null   int64  
- 9   TotRms AbvGrd  2930 non-null   int64  
- 10  Fireplaces     2930 non-null   int64  
- 11  Garage Area    2929 non-null   float64
- 12  Yr Sold        2930 non-null   int64  
- 13  SalePrice      2930 non-null   int64  
-dtypes: float64(1), int64(8), object(5)
-memory usage: 320.6+ KB
-None
+Data columns (total 17 columns):
+ #   Column          Non-Null Count  Dtype  
+---  ------          --------------  -----  
+ 0   Bsmt Half Bath  2930 non-null   float64
+ 1   Bsmt Full Bath  2930 non-null   float64
+ 2   Total Bsmt SF   2930 non-null   float64
+ 3   Lot Area        2930 non-null   int64  
+ 4   Lot Shape       2930 non-null   object 
+ 5   House Style     2930 non-null   object 
+ 6   Neighborhood    2930 non-null   object 
+ 7   Year Built      2930 non-null   int64  
+ 8   Bsmt Cond       2930 non-null   object 
+ 9   Central Air     2930 non-null   object 
+ 10  Overall Cond    2930 non-null   int64  
+ 11  Full Bath       2930 non-null   int64  
+ 12  TotRms AbvGrd   2930 non-null   int64  
+ 13  Fireplaces      2930 non-null   int64  
+ 14  Garage Area     2930 non-null   float64
+ 15  Yr Sold         2930 non-null   int64  
+ 16  SalePrice       2930 non-null   int64  
+dtypes: float64(4), int64(8), object(5)
+memory usage: 389.3+ KB
 ```
 We can also check the correlation heatmap for the numerical features that we have to get an idea how related the features are.
 ```python
@@ -188,10 +192,10 @@ results_df = pd.DataFrame(results).sort_values(by="RMSE")
 print(results_df)
 ```
 ```output
-               Model      RMSE       MAE    R²     MAPE (%)  MPE (%)
-2            XGBoost  37071.42  21795.56  0.83     11.32    -2.56
-1      Random Forest  37533.28  21647.81  0.82     11.37    -3.54
-0  Linear Regression  41276.68  26285.24  0.79     13.71    -1.49
+               Model     RMSE     MAE     R²      MAPE (%)   MPE (%)
+1      Random Forest  30090.05  17823.73  0.89      9.67    -2.38
+2            XGBoost  33198.76  19154.70  0.86     10.05    -2.00
+0  Linear Regression  37866.82  23799.43  0.82     12.66    -0.80
 
 ```
 
@@ -231,47 +235,3 @@ plt.show()
 
 Finally, we visualize the predicted sale price versus the actual sale price for the houses for all three models. 
 ![Model comparison](images/sale_price_comparison.png)
-
-## Bonus: An Example of Searching for Best Hyperparameters using Cross-Validation
-
-Here, we do a grid search for different combinations of hyperparameter values for the Random Forest model. Something similar can be done for other models. 
-
-```python
-# Here, you can add different values for the hyperparameters as desired. I am keeping this to a smaller grid to conserve time.
-param_grid = {
-    "regressor__n_estimators": [50,100,200],
-    "regressor__max_depth": [None,5, 10, 20],
-    "regressor__min_samples_split": [2, 5],
-    "regressor__min_samples_leaf": [1, 2],
-}
-rf_model = Pipeline(steps=[
-    ("preprocessing", preprocessor),
-    ("regressor", RandomForestRegressor(random_state=42))
-])
-
-search = GridSearchCV(
-    rf_model,               
-    param_grid,              # search space
-    cv=5,                    # 5-fold cross-validation
-    scoring="neg_root_mean_squared_error",  # you can also use "r2" or other scoring methods
-    n_jobs=-1,               # use all CPU cores
-    verbose=2
-)
-
-search.fit(X_train, y_train)
-print("Best parameters:", search.best_params_)
-print("Best RMSE score (CV):", -search.best_score_)
-
-# Use best model on test set
-best_model = search.best_estimator_
-y_pred_best = best_model.predict(X_test)
-test_rmse = np.sqrt(mean_squared_error(y_test, y_pred_best))
-print("Test RMSE:", test_rmse)
-```
-
-```output
-Fitting 5 folds for each of 48 candidates, totalling 240 fits
-Best parameters: {'regressor__max_depth': None, 'regressor__min_samples_leaf': 1, 'regressor__min_samples_split': 2, 'regressor__n_estimators': 200}
-Best RMSE score (CV): 33093.26205907554
-Test RMSE: 37657.02820955306
-```
